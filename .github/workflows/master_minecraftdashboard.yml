@@ -45,13 +45,13 @@ jobs:
 
       - name: Debug Secrets
         run: |
-          echo "Client ID: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}"
+          echo "Client ID: ${{ secrets.AZUREAPPSERVICE_CLIENTID_52CC38E44D32419C8DF773495D6D03AF }}"
           echo "Tenant ID: ${{ secrets.AZUREAPPSERVICE_TENANTID }}"
           echo "Subscription ID: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}"
         env:
           AZUREAPPSERVICE_CLIENTID: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-          AZUREAPPSERVICE_TENANTID: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
-          AZUREAPPSERVICE_SUBSCRIPTIONID: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+          AZUREAPPSERVICE_TENANTID: ${{ secrets.AZUREAPPSERVICE_TENANTID_252C28E679CF452EA16F118150C646D8 }}
+          AZUREAPPSERVICE_SUBSCRIPTIONID: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F68200B7A6354B249BF3A22E41048ECD }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
