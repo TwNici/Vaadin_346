@@ -10,24 +10,22 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
 @Route("/home")
 @PageTitle("Server Dashboard")
 @CssImport("./themes/style.css")
 public class MainView extends VerticalLayout {
 
-    private Button Start;
-
-    private Button Stop;
-
-    private Button Restart;
-
     public MainView() {
-
         H1 title = new H1("Server Dashboard");
         title.addClassName("title");
 
-        Button start =  new Button(new Icon(VaadinIcon.CARET_RIGHT), e -> serverStarter());
-        title.addClassName("Start");
+        Button start = new Button(new Icon(VaadinIcon.CARET_RIGHT), e -> serverStarter());
+        start.addClassName("Start");
 
         Button stop = new Button(new Icon(VaadinIcon.STOP), e -> serverStopper());
         stop.addClassName("stop");
@@ -38,28 +36,40 @@ public class MainView extends VerticalLayout {
         Button logout = new Button(new Icon(VaadinIcon.EXIT), e -> logout());
 
         add(title, start, stop, restart, logout);
-
-
-
-
     }
 
-    public void serverStarter() {
+    private void serverStarter() {
         Notification.show("Server Startet");
-
+        doAction("StartMinecraftServer");
     }
 
-    public void serverStopper() {
+    private void serverStopper() {
         Notification.show("Server Stoppt");
-
+        doAction("StopMinecraftServer");
     }
 
-    public void serverRestarter() {
+    private void serverRestarter() {
         Notification.show("Server Restartet");
-
+        doAction("RestartMinecraftServer");
     }
 
-    public  void logout() {
+    private void logout() {
         Notification.show("Logout");
+    }
+
+    private void doAction(String actionName) {
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://10.0.0.4:8080/" + actionName))
+                    .POST(HttpRequest.BodyPublishers.noBody())
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            Notification.show("Antwort: " + response.body());
+
+        } catch (Exception e) {
+            Notification.show("Fehler: " + e.getMessage());
+        }
     }
 }
