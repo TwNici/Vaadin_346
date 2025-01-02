@@ -10,7 +10,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
-@Route("")
+@Route("/home")
 @PageTitle("Server Dashboard")
 @CssImport("./themes/style.css")
 public class MainView extends VerticalLayout {
@@ -35,7 +35,9 @@ public class MainView extends VerticalLayout {
         Button restart = new Button(new Icon(VaadinIcon.REFRESH), e -> serverRestarter());
         restart.addClassName("restart");
 
-        add(title, start, stop, restart);
+        Button logout = new Button(new Icon(VaadinIcon.EXIT), e -> logout());
+
+        add(title, start, stop, restart, logout);
 
 
 
@@ -55,5 +57,9 @@ public class MainView extends VerticalLayout {
     public void serverRestarter() {
         Notification.show("Server Restartet");
 
+    }
+
+    public  void logout() {
+        Notification.show("Logout");
     }
 }
