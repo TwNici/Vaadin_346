@@ -48,7 +48,6 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
         Button logout = new Button(new Icon(VaadinIcon.EXIT), e -> logout());
         logout.addClassName("logout");
 
-
         console console = new console();
 
         console.consoleConnectionTest();
@@ -57,17 +56,16 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
         conCanvas.addClassName("conCanvas");
 
         add(title, start, stop, restart, logout, conCanvas);
-
     }
 
     private void serverStarter() {
         Notification.show("Server Startet");
-        doAction("StartMinecraftServer");
+        doAction("start-minecraft");
     }
 
     private void serverStopper() {
         Notification.show("Server Stoppt");
-        doAction("StopMinecraftServer");
+        doAction("stop-minecraft");
     }
 
     private void serverRestarter() {
@@ -84,24 +82,32 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
     private void doAction(String actionName) {
         try {
             HttpClient client = HttpClient.newHttpClient();
+
+            // Sicherstellen, dass der korrekte Endpunkt angesprochen wird
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://10.0.0.4:8080/" + actionName))
-                    .POST(HttpRequest.BodyPublishers.noBody())
+                    .uri(URI.create("http://51.107.13.118:5000/" + actionName))
+                    .GET()
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            Notification.show("Antwort: " + response.body());
 
+            if (response.statusCode() == 200) {
+                Notification.show("Aktion erfolgreich: " + response.body());
+            } else {
+                Notification.show("API-Fehler: " + response.statusCode() + " - " + response.body());
+            }
         } catch (Exception e) {
-            Notification.show("Fehler: " + e.getMessage());
+            Notification.show("Verbindungsfehler: " + e.getMessage());
+            e.printStackTrace();
         }
     }
+
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         String token = getTokenFromSession();
-
         System.out.println(token);
+
         if (token == null || JwtUtil.validateToken(token) == null) {
             event.rerouteTo("");
         }
@@ -110,5 +116,4 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
     private String getTokenFromSession() {
         return (String) VaadinSession.getCurrent().getAttribute("authToken");
     }
-
 }

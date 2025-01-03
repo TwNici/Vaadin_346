@@ -10,7 +10,7 @@ public class console {
     private String noti;
     public void consoleConnectionTest() {
         try {
-            URL url = new URL("https://www.google.com/");
+            URL url = new URL("https://google.com");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
 
