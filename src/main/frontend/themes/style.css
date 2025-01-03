@@ -1,6 +1,86 @@
+@font-face {
+    font-family: 'Minecraft';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Minecraft'),
+    url('https://fonts.cdnfonts.com/s/25041/1_MinecraftRegular1.woff') format('woff');
+}
+@font-face {
+    font-family: 'Minecraft';
+    font-style: italic;
+    font-weight: 400;
+    src: local('Minecraft'),
+    url('https://fonts.cdnfonts.com/s/25041/2_MinecraftItalic1.woff') format('woff');
+}
+@font-face {
+    font-family: 'Minecraft';
+    font-style: normal;
+    font-weight: 700;
+    src: local('Minecraft'),
+    url('https://fonts.cdnfonts.com/s/25041/3_MinecraftBold1.woff') format('woff');
+}
+@font-face {
+    font-family: 'Minecraft';
+    font-style: italic;
+    font-weight: 700;
+    src: local('Minecraft'),
+    url('https://fonts.cdnfonts.com/s/25041/4_MinecraftBoldItalic1.woff') format('woff');
+}
+
+body {
+    font-family: 'Minecraft', sans-serif;
+
+}
+
 .title {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
+    left: 470px;
+    font-family: 'Minecraft';
+}
+
+.logout {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    left: 1000px;
+    font-family: 'Minecraft';
+}
+
+.conCanvas {
+    position: absolute;
+    top: 200px;
+    left: 400px;
+    width: 600px;
+    height: 400px;
+    background-color: #000;
+    color: #0f0;
+    border: 4px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Minecraft';
+}
+
+.start, .stop, .restart {
+    position: absolute;
+    left: 400px;
+    top: 630px;
+    margin-right: 10px;
+    padding: 5px 10px;
+    color: rgb(128, 128, 128);
+    border: 2px solid black;
+    font-family: 'Minecraft';
+    cursor: pointer;
+}
+
+.stop {
+    left: 470px;
+}
+
+.restart {
+    left: 540px;
 }

@@ -2,7 +2,9 @@ package org.vaadin.example;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -10,6 +12,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -20,12 +23,15 @@ import java.net.http.HttpResponse;
 @CssImport("./themes/style.css")
 public class MainView extends VerticalLayout {
 
-    public MainView() {
+    public MainView() throws IOException {
         H1 title = new H1("Server Dashboard");
         title.addClassName("title");
 
+        H3 conText = new H3("Console");
+        conText.addClassName("conText");
+
         Button start = new Button(new Icon(VaadinIcon.CARET_RIGHT), e -> serverStarter());
-        start.addClassName("Start");
+        start.addClassName("start");
 
         Button stop = new Button(new Icon(VaadinIcon.STOP), e -> serverStopper());
         stop.addClassName("stop");
@@ -34,8 +40,18 @@ public class MainView extends VerticalLayout {
         restart.addClassName("restart");
 
         Button logout = new Button(new Icon(VaadinIcon.EXIT), e -> logout());
+        logout.addClassName("logout");
 
-        add(title, start, stop, restart, logout);
+
+        console console = new console();
+
+        console.consoleConnectionTest();
+        String conNoti = console.getNoti();
+        Div conCanvas = new Div(conNoti);
+        conCanvas.addClassName("conCanvas");
+
+        add(title, start, stop, restart, logout, conCanvas);
+
     }
 
     private void serverStarter() {
