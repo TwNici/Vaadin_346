@@ -11,55 +11,43 @@ import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.server.VaadinSession;
 import org.vaadin.example.jwt.JwtUtil;
 
 @Route("")
 public class Login extends Div {
 
     private TextField firstName;
-    private TextField lastName;
-    private TextField username;
-    private PasswordField password;
-    private final Binder<User> binder;
+    private String name;
 
     public Login() {
-        this.binder = new Binder<>();
         init();
     }
 
     private void init() {
         initLayout();
-        initBinder();
-    }
-
-    private void initBinder() {
-        binder.forField(firstName).asRequired().bind(User::getFirstName, User::setFirstName);
-        binder.forField(lastName).asRequired().bind(User::getLastName, User::setLastName);
-        binder.forField(username).asRequired().bind(User::getUsername, User::setUsername);
-        binder.forField(password).asRequired().bind(User::getPassword, User::setPassword);
     }
 
     private void initLayout() {
         firstName = new TextField("First name");
-        lastName = new TextField("Last name");
-        username = new TextField("Username");
-        password = new PasswordField("Password");
 
         FormLayout formLayout = new FormLayout();
-        formLayout.add(firstName, lastName, username, password);
-        formLayout.setResponsiveSteps(
-                new ResponsiveStep("0", 1),
-                new ResponsiveStep("500px", 2));
-        formLayout.setColspan(username, 2);
+        formLayout.add(firstName);
 
         Button login =  new Button(new Icon(VaadinIcon.ACCESSIBILITY), e -> login());
+
+        firstName.addValueChangeListener(e -> {
+            name = e.getValue();
+        });
 
         add(formLayout, login);
     }
 
     public void login() {
-        String token = JwtUtil.generateToken(binder.getBean().getUsername());
-        UI.getCurrent().getPage().executeJs("localStorage.setItem('authToken', $0);", token);
-        UI.getCurrent().navigate("login");
+        if (name.equals("seeli")) {
+            String token = JwtUtil.generateToken(name);
+            VaadinSession.getCurrent().setAttribute("authToken", token);
+        }
+        UI.getCurrent().navigate("home");
     }
 }

@@ -3,6 +3,8 @@ package org.vaadin.example.jwt;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import elemental.json.Json;
+import elemental.json.JsonValue;
 
 import java.util.Date;
 
@@ -23,7 +25,7 @@ public class JwtUtil {
         try {
             return JWT.require(ALGORITHM)
                     .build()
-                    .verify(token)
+                    .verify(token.toString())
                     .getSubject();
         } catch (JWTVerificationException e) {
             throw new RuntimeException("Invalid token");

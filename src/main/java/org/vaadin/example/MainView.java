@@ -1,5 +1,6 @@
 package org.vaadin.example;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
@@ -9,8 +10,13 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
+import elemental.json.JsonValue;
+import org.vaadin.example.jwt.JwtUtil;
 
 import java.io.IOException;
 import java.net.URI;
@@ -21,7 +27,7 @@ import java.net.http.HttpResponse;
 @Route("/home")
 @PageTitle("Server Dashboard")
 @CssImport("./themes/style.css")
-public class MainView extends VerticalLayout {
+public class MainView extends VerticalLayout implements BeforeEnterObserver {
 
     public MainView() throws IOException {
         H1 title = new H1("Server Dashboard");
@@ -71,6 +77,8 @@ public class MainView extends VerticalLayout {
 
     private void logout() {
         Notification.show("Logout");
+        VaadinSession.getCurrent().setAttribute("authToken", null);
+        UI.getCurrent().navigate("");
     }
 
     private void doAction(String actionName) {
@@ -88,4 +96,19 @@ public class MainView extends VerticalLayout {
             Notification.show("Fehler: " + e.getMessage());
         }
     }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        String token = getTokenFromSession();
+
+        System.out.println(token);
+        if (token == null || JwtUtil.validateToken(token) == null) {
+            event.rerouteTo("");
+        }
+    }
+
+    private String getTokenFromSession() {
+        return (String) VaadinSession.getCurrent().getAttribute("authToken");
+    }
+
 }
