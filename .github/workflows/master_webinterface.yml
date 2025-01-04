@@ -51,7 +51,7 @@ jobs:
         with:
           client-id: 'f7181abe-8668-47e9-b486-e42cf2088072'
           tenant-id: '6de487eb-76cf-421d-8860-5b405e3f1772'
-          subscription-id: '61aea862-c4fe-433b-95a7-9cb2cdc9cf5f'
+          subscription-id: 'af60d4af-e9be-443f-99b1-12e3b94e747e'
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
