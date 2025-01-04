@@ -46,6 +46,8 @@
             <artifactId>java-jwt</artifactId>
             <version>4.4.0</version>
         </dependency>
+
+
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-spring-boot-starter</artifactId>

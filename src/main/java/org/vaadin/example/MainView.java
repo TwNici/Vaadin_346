@@ -8,14 +8,15 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.messages.MessageList;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
-import elemental.json.JsonValue;
 import org.vaadin.example.jwt.JwtUtil;
 
 import java.io.IOException;
@@ -23,13 +24,21 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Timer;
+import java.util.TimerTask;
 
 @Route("/home")
 @PageTitle("Server Dashboard")
 @CssImport("./themes/style.css")
 public class MainView extends VerticalLayout implements BeforeEnterObserver {
 
-    public MainView() throws IOException {
+    private MessageList conCanvas;
+    private Div conNotiA;
+    private Console console;
+    private Timer timer;
+    private TextField sendCommand;
+
+    public MainView() {
         H1 title = new H1("Server Dashboard");
         title.addClassName("title");
 
@@ -48,16 +57,46 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
         Button logout = new Button(new Icon(VaadinIcon.EXIT), e -> logout());
         logout.addClassName("logout");
 
-        console console = new console();
+        sendCommand = new TextField("Send Commands");
+        sendCommand.addClassName("sendCommand");
 
-        console.consoleConnectionTest();
-        String conNoti = console.getNoti();
-        Div conCanvas = new Div("Console stuff");
+        console = new Console();
+        conCanvas = new MessageList();
+        conCanvas.setId("consoleOutput");
         conCanvas.addClassName("conCanvas");
-        Div conNotiA = new Div(conNoti);
+
+        conNotiA = new Div("Status wird geladen...");
         conNotiA.addClassName("conNotiA");
 
-        add(title, start, stop, restart, logout, conCanvas, conNotiA);
+        add(title, start, stop, restart, logout, conCanvas, conNotiA, sendCommand);
+
+        startLogStream();
+        startServerStatusUpdater();
+    }
+
+
+    private void startServerStatusUpdater() {
+        UI ui = UI.getCurrent();
+        timer = new Timer(true);
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (ui != null && ui.getSession() != null && ui.getSession().getSession() != null) {
+                    ui.access(() -> {
+                        console.fetchServerStatus();
+                        conNotiA.setText(console.getNoti());
+                    });
+                }
+            }
+        }, 0, 500);
+    }
+
+
+    private void stopServerStatusUpdater() {
+        if (timer != null) {
+            timer.cancel();
+            timer.purge();
+        }
     }
 
     private void serverStarter() {
@@ -72,20 +111,31 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
 
     private void serverRestarter() {
         Notification.show("Server Restartet");
-        doAction("RestartMinecraftServer");
+        doAction("restart-minecraft");
     }
 
     private void logout() {
         Notification.show("Logout");
         VaadinSession.getCurrent().setAttribute("authToken", null);
+        stopServerStatusUpdater();
         UI.getCurrent().navigate("");
+    }
+
+    private void startLogStream() {
+        getElement().executeJs(
+                "const eventSource = new EventSource('http://51.107.13.118:5000/minecraft-console');" +
+                        "eventSource.onmessage = (event) => {" +
+                        "   const conCanvas = document.querySelector('.conCanvas');" +
+                        "   if (conCanvas) {" +
+                        "       conCanvas.textContent += event.data + '\\n';" +
+                        "   }" +
+                        "};"
+        );
     }
 
     private void doAction(String actionName) {
         try {
             HttpClient client = HttpClient.newHttpClient();
-
-            // Sicherstellen, dass der korrekte Endpunkt angesprochen wird
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("http://51.107.13.118:5000/" + actionName))
                     .GET()
@@ -104,13 +154,11 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
         }
     }
 
-
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         String token = getTokenFromSession();
-        System.out.println(token);
-
         if (token == null || JwtUtil.validateToken(token) == null) {
+            stopServerStatusUpdater();
             event.rerouteTo("");
         }
     }
