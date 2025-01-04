@@ -29,7 +29,7 @@
 
 body {
     font-family: 'Minecraft', sans-serif;
-
+    background-image: url("back.png");
 }
 
 .title {
@@ -41,14 +41,7 @@ body {
     font-family: 'Minecraft';
 }
 
-.logout {
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    justify-content: flex-end;
-    left: 1000px;
-    font-family: 'Minecraft';
-}
+
 
 .conCanvas {
     position: absolute;
@@ -65,7 +58,7 @@ body {
     font-family: 'Minecraft';
 }
 
-.start, .stop, .restart {
+.start, .stop, .restart, .conNotiA, .logout {
     position: absolute;
     left: 400px;
     top: 630px;
@@ -75,6 +68,8 @@ body {
     border: 2px solid black;
     font-family: 'Minecraft';
     cursor: pointer;
+    background: ghostwhite;
+
 }
 
 .stop {
@@ -83,4 +78,12 @@ body {
 
 .restart {
     left: 540px;
+}
+
+.conNotiA {
+    left: 610px;
+}
+
+.logout {
+    left: 900px;
 }

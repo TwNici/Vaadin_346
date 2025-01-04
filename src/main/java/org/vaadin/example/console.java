@@ -10,17 +10,17 @@ public class console {
     private String noti;
     public void consoleConnectionTest() {
         try {
-            URL url = new URL("https://google.com");
+            URL url = new URL("http://51.107.13.118:5000/");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
 
             int responseCode = con.getResponseCode();
             if (responseCode == 200) {
-                noti = "Verbindung konnte aufgebaut werden";
+                noti = "Status: \uD83D\uDFE2";
             }
 
         } catch (IOException e) {
-            noti = "Verbindung fehlgeschlagen";
+            noti = "Status: \uD83D\uDD34";
         }
     }
 

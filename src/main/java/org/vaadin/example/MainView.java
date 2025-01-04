@@ -52,10 +52,12 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
 
         console.consoleConnectionTest();
         String conNoti = console.getNoti();
-        Div conCanvas = new Div(conNoti);
+        Div conCanvas = new Div("Console stuff");
         conCanvas.addClassName("conCanvas");
+        Div conNotiA = new Div(conNoti);
+        conNotiA.addClassName("conNotiA");
 
-        add(title, start, stop, restart, logout, conCanvas);
+        add(title, start, stop, restart, logout, conCanvas, conNotiA);
     }
 
     private void serverStarter() {
