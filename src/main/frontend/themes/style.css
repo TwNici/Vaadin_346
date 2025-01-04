@@ -62,7 +62,7 @@ body {
 }
 
 
-.start, .stop, .restart, .conNotiA, .logout, .sendCommand {
+.start, .stop, .restart, .conNotiA, .logout, .sendCommand, .sendCommandButton {
     position: absolute;
     left: 400px;
     top: 630px;
@@ -77,21 +77,25 @@ body {
 }
 
 .stop {
-    left: 470px;
+    left: 460px;
 }
 
 .restart {
-    left: 540px;
+    left: 520px;
 }
 
 .conNotiA {
-    left: 610px;
+    left: 580px;
 }
 
 .sendCommand {
-    left: 770px;
+    left: 707px;
 }
 .logout {
-    left: 990px;
+    left: 953px;
 }
 
+.sendCommandButton {
+    left: 867px;
+    top: 635px;
+}

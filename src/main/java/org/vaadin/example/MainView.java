@@ -57,8 +57,11 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
         Button logout = new Button(new Icon(VaadinIcon.EXIT), e -> logout());
         logout.addClassName("logout");
 
-        sendCommand = new TextField("Send Commands");
+        sendCommand = new TextField();
         sendCommand.addClassName("sendCommand");
+
+        Button sendCommandButton = new Button(new Icon(VaadinIcon.PLAY), e -> sendCommands());
+        sendCommandButton.addClassName("sendCommandButton");
 
         console = new Console();
         conCanvas = new MessageList();
@@ -68,7 +71,7 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
         conNotiA = new Div("Status wird geladen...");
         conNotiA.addClassName("conNotiA");
 
-        add(title, start, stop, restart, logout, conCanvas, conNotiA, sendCommand);
+        add(title, start, stop, restart, logout, conCanvas, conNotiA, sendCommand, sendCommandButton);
 
         startLogStream();
         startServerStatusUpdater();
@@ -131,6 +134,38 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
                         "   }" +
                         "};"
         );
+    }
+
+    private void sendCommands() {
+        String command = sendCommand.getValue();
+        if (command == null || command.isEmpty()) {
+            Notification.show("Bitte einen Befehl eingeben!");
+            return;
+        }
+
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+
+            String jsonPayload = String.format("{\"command\": \"%s\"}", command);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://51.107.13.118:5000/send-command"))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                Notification.show("Befehl erfolgreich gesendet: " + command);
+            } else {
+                Notification.show("Fehler: " + response.statusCode() + " - " + response.body());
+            }
+
+        } catch (Exception e) {
+            Notification.show("Verbindungsfehler: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void doAction(String actionName) {
