@@ -47,12 +47,21 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
         Button restart = new Button(new Icon(VaadinIcon.REFRESH), e -> serverRestarter());
         Button logout = new Button(new Icon(VaadinIcon.EXIT), e -> logout());
 
+
+
+
         sendCommand = new TextField();
         Button sendCommandButton = new Button(new Icon(VaadinIcon.PLAY), e -> sendCommands());
 
         conCanvas = new Div();
         conCanvas.addClassName("conCanvas");
 
+        start.addClassName("start");
+        stop.addClassName("stop");
+        restart.addClassName("restart");
+        logout.addClassName("logout");
+        sendCommand.addClassName("sendCommand");
+        sendCommandButton.addClassName("sendCommandButton");
         add(title, start, stop, restart, logout, conCanvas, sendCommand, sendCommandButton);
 
         minecraftEndpoints.startLogStream(UI.getCurrent(), conCanvas);
