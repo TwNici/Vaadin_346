@@ -126,7 +126,7 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
 
     private void startLogStream() {
         getElement().executeJs(
-                "const eventSource = new EventSource('http://10.0.1.4:5000/minecraft-console');" +
+                "const eventSource = new EventSource('http://51.107.13.118:5000/minecraft-console');" +
                         "eventSource.onmessage = (event) => {" +
                         "   const conCanvas = document.querySelector('.conCanvas');" +
                         "   if (conCanvas) {" +
@@ -149,7 +149,7 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
             String jsonPayload = String.format("{\"command\": \"%s\"}", command);
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://10.0.1.4:5000/send-command"))
+                    .uri(URI.create("http://51.107.13.118:5000/send-command"))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                     .build();
@@ -172,7 +172,7 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
         try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://10.0.1.4:5000/" + actionName))
+                    .uri(URI.create("http://51.107.13.118:5000/" + actionName))
                     .GET()
                     .build();
 
