@@ -1,5 +1,7 @@
 package org.vaadin.example;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
 
@@ -60,35 +62,58 @@ public class MinecraftEndpoints {
     public void startLogStream(UI ui, Div conCanvas) {
         isStreaming = true;
         new Thread(() -> {
-            try {
-                URL url = new URL(baseUrl + "/minecraft-console");
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
+            while (isStreaming) {
+                try {
+                    URL url = new URL(baseUrl + "/minecraft-console");
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("GET");
 
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                    String line;
-                    while (isStreaming && (line = reader.readLine()) != null) {
-                        String finalLine = line;
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                        String line;
+                        while (isStreaming && (line = reader.readLine()) != null) {
+                            String finalLine = line;
 
-                        ui.access(() -> {
-                            Div logEntry = new Div();
-                            logEntry.setText(finalLine);
-                            conCanvas.add(logEntry);
+                            // JSON-Verarbeitung
+                            ui.access(() -> {
+                                try {
+                                    ObjectMapper objectMapper = new ObjectMapper();
+                                    JsonNode jsonNode = objectMapper.readTree(finalLine);
 
-                            ui.getPage().executeJs("const el = document.querySelector('.conCanvas'); if (el) { el.scrollTop = el.scrollHeight; }");
-                        });
+                                    String timestamp = jsonNode.has("timestamp") ? jsonNode.get("timestamp").asText() : "N/A";
+                                    String message = jsonNode.has("message") ? jsonNode.get("message").asText() : "Keine Nachricht";
+
+                                    Div logEntry = new Div();
+                                    logEntry.setText("[" + timestamp + "] " + message);
+                                    conCanvas.add(logEntry);
+
+                                    ui.getPage().executeJs("const el = document.querySelector('.conCanvas'); if (el) { el.scrollTop = el.scrollHeight; }");
+
+                                } catch (Exception e) {
+                                    Div errorEntry = new Div();
+                                    errorEntry.setText("Fehler beim Verarbeiten von JSON: " + e.getMessage());
+                                    conCanvas.add(errorEntry);
+                                    e.printStackTrace();
+                                }
+                            });
+                        }
+                    }
+                } catch (Exception e) {
+                    ui.access(() -> {
+                        Div errorEntry = new Div();
+                        errorEntry.setText("Fehler beim Log-Stream: " + e.getMessage());
+                        conCanvas.add(errorEntry);
+                    });
+                    e.printStackTrace();
+
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException ignored) {
                     }
                 }
-            } catch (Exception e) {
-                ui.access(() -> {
-                    Div errorEntry = new Div();
-                    errorEntry.setText("Fehler beim Log-Stream: " + e.getMessage());
-                    conCanvas.add(errorEntry);
-                });
-                e.printStackTrace();
             }
         }).start();
     }
+
 
 
 
