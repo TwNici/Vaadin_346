@@ -19,7 +19,7 @@ public class Console {
     public String fetchServerStatus() {
         String noti;
         try {
-            URL url = new URL("http://51.107.13.118:5000/server-status");
+            URL url = new URL("http://10.0.1.4:5000/server-status");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             con.setConnectTimeout(3000);
