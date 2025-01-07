@@ -37,7 +37,7 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
     private TextField sendCommand;
 
     public MainView() {
-        this.minecraftEndpoints = new MinecraftEndpoints("http://10.0.1.5:5000");
+        this.minecraftEndpoints = new MinecraftEndpoints("http://10.0.1.4:5000");
 
         H1 title = new H1("Server Dashboard");
         title.addClassName("title");

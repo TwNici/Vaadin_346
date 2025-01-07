@@ -14,7 +14,7 @@ public class MinecraftEndpoints {
     private final String baseUrl;
 
     public MinecraftEndpoints(String baseUrl) {
-        this.baseUrl = "51.107.13.118";
+        this.baseUrl = baseUrl;
     }
 
     public String doAction(String actionName) throws IOException, InterruptedException {
