@@ -69,10 +69,13 @@ public class MinecraftEndpoints {
                     String line;
                     while (isStreaming && (line = reader.readLine()) != null) {
                         String finalLine = line;
+
                         ui.access(() -> {
                             Div logEntry = new Div();
                             logEntry.setText(finalLine);
                             conCanvas.add(logEntry);
+
+                            ui.getPage().executeJs("const el = document.querySelector('.conCanvas'); if (el) { el.scrollTop = el.scrollHeight; }");
                         });
                     }
                 }
@@ -86,5 +89,6 @@ public class MinecraftEndpoints {
             }
         }).start();
     }
+
 
 }
