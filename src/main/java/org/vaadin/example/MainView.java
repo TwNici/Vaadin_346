@@ -32,108 +32,54 @@ import java.util.TimerTask;
 @CssImport("./themes/style.css")
 public class MainView extends VerticalLayout implements BeforeEnterObserver {
 
-    private MessageList conCanvas;
-    private Div conNotiA;
-    private Console console;
-    private Timer timer;
+    private final MinecraftEndpoints minecraftEndpoints;
+    private Div conCanvas;
     private TextField sendCommand;
 
     public MainView() {
+        this.minecraftEndpoints = new MinecraftEndpoints("http://10.0.1.5:5000");
+
         H1 title = new H1("Server Dashboard");
         title.addClassName("title");
 
-        H3 conText = new H3("Console");
-        conText.addClassName("conText");
-
         Button start = new Button(new Icon(VaadinIcon.CARET_RIGHT), e -> serverStarter());
-        start.addClassName("start");
-
         Button stop = new Button(new Icon(VaadinIcon.STOP), e -> serverStopper());
-        stop.addClassName("stop");
-
         Button restart = new Button(new Icon(VaadinIcon.REFRESH), e -> serverRestarter());
-        restart.addClassName("restart");
-
         Button logout = new Button(new Icon(VaadinIcon.EXIT), e -> logout());
-        logout.addClassName("logout");
 
         sendCommand = new TextField();
-        sendCommand.addClassName("sendCommand");
-
         Button sendCommandButton = new Button(new Icon(VaadinIcon.PLAY), e -> sendCommands());
-        sendCommandButton.addClassName("sendCommandButton");
 
-        console = new Console();
-        conCanvas = new MessageList();
-        conCanvas.setId("consoleOutput");
+        conCanvas = new Div();
         conCanvas.addClassName("conCanvas");
 
-        conNotiA = new Div("Status wird geladen...");
-        conNotiA.addClassName("conNotiA");
+        add(title, start, stop, restart, logout, conCanvas, sendCommand, sendCommandButton);
 
-        add(title, start, stop, restart, logout, conCanvas, conNotiA, sendCommand, sendCommandButton);
-
-        startLogStream();
-        startServerStatusUpdater();
-    }
-
-
-    private void startServerStatusUpdater() {
-        UI ui = UI.getCurrent();
-        timer = new Timer(true);
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                if (ui != null && ui.getSession() != null && ui.getSession().getSession() != null) {
-                    ui.access(() -> {
-                        console.fetchServerStatus();
-                        conNotiA.setText(console.getNoti());
-                    });
-                }
-            }
-        }, 0, 500);
-    }
-
-
-    private void stopServerStatusUpdater() {
-        if (timer != null) {
-            timer.cancel();
-            timer.purge();
-        }
+        minecraftEndpoints.startLogStream(UI.getCurrent(), conCanvas);
     }
 
     private void serverStarter() {
-        Notification.show("Server Startet");
-        doAction("start-minecraft");
+        try {
+            Notification.show(minecraftEndpoints.doAction("start-minecraft"));
+        } catch (Exception e) {
+            handleError(e);
+        }
     }
 
     private void serverStopper() {
-        Notification.show("Server Stoppt");
-        doAction("stop-minecraft");
+        try {
+            Notification.show(minecraftEndpoints.doAction("stop-minecraft"));
+        } catch (Exception e) {
+            handleError(e);
+        }
     }
 
     private void serverRestarter() {
-        Notification.show("Server Restartet");
-        doAction("restart-minecraft");
-    }
-
-    private void logout() {
-        Notification.show("Logout");
-        VaadinSession.getCurrent().setAttribute("authToken", null);
-        stopServerStatusUpdater();
-        UI.getCurrent().navigate("");
-    }
-
-    private void startLogStream() {
-        getElement().executeJs(
-                "const eventSource = new EventSource('http://51.107.13.118:5000/minecraft-console');" +
-                        "eventSource.onmessage = (event) => {" +
-                        "   const conCanvas = document.querySelector('.conCanvas');" +
-                        "   if (conCanvas) {" +
-                        "       conCanvas.textContent += event.data + '\\n';" +
-                        "   }" +
-                        "};"
-        );
+        try {
+            Notification.show(minecraftEndpoints.doAction("restart-minecraft"));
+        } catch (Exception e) {
+            handleError(e);
+        }
     }
 
     private void sendCommands() {
@@ -144,61 +90,29 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
         }
 
         try {
-            HttpClient client = HttpClient.newHttpClient();
-
-            String jsonPayload = String.format("{\"command\": \"%s\"}", command);
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://51.107.13.118:5000/send-command"))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
-                    .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                Notification.show("Befehl erfolgreich gesendet: " + command);
-            } else {
-                Notification.show("Fehler: " + response.statusCode() + " - " + response.body());
-            }
-
+            Notification.show(minecraftEndpoints.sendCommand(command));
         } catch (Exception e) {
-            Notification.show("Verbindungsfehler: " + e.getMessage());
-            e.printStackTrace();
+            handleError(e);
         }
     }
 
-    private void doAction(String actionName) {
-        try {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://51.107.13.118:5000/" + actionName))
-                    .GET()
-                    .build();
+    private void logout() {
+        Notification.show("Logout");
+        VaadinSession.getCurrent().setAttribute("authToken", null);
+        UI.getCurrent().navigate("");
+    }
 
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                Notification.show("Aktion erfolgreich: " + response.body());
-            } else {
-                Notification.show("API-Fehler: " + response.statusCode() + " - " + response.body());
-            }
-        } catch (Exception e) {
-            Notification.show("Verbindungsfehler: " + e.getMessage());
-            e.printStackTrace();
-        }
+    private void handleError(Exception e) {
+        Notification.show("Fehler: " + e.getMessage());
+        e.printStackTrace();
     }
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        String token = getTokenFromSession();
+        String token = (String) VaadinSession.getCurrent().getAttribute("authToken");
         if (token == null || JwtUtil.validateToken(token) == null) {
-            stopServerStatusUpdater();
             event.rerouteTo("");
         }
     }
-
-    private String getTokenFromSession() {
-        return (String) VaadinSession.getCurrent().getAttribute("authToken");
-    }
 }
+
