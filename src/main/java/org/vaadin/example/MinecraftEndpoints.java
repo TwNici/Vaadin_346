@@ -14,15 +14,22 @@ import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MinecraftEndpoints {
 
     private final String baseUrl;
     private volatile boolean isStreaming = false;
-
+    private final List<String> logEntries;
 
     public MinecraftEndpoints(String baseUrl) {
         this.baseUrl = baseUrl;
+        this.logEntries = new ArrayList<>();
+    }
+
+    public void clearLog() {
+        logEntries.clear();
     }
 
     public String doAction(String actionName) throws IOException, InterruptedException {
@@ -58,70 +65,50 @@ public class MinecraftEndpoints {
         }
     }
 
-
     public void startLogStream(UI ui, Div conCanvas) {
         isStreaming = true;
         new Thread(() -> {
-            while (isStreaming) {
-                try {
-                    URL url = new URL(baseUrl + "/minecraft-console");
-                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                    connection.setRequestMethod("GET");
+            try {
+                URL url = new URL(baseUrl + "/minecraft-console");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
 
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            String finalLine = line;
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                    String line;
+                    while (isStreaming && (line = reader.readLine()) != null) {
+                        String finalLine = line;
+                        logEntries.add(finalLine);
 
-                            ui.access(() -> {
+                        ui.access(() -> {
+                            conCanvas.removeAll();
+                            logEntries.forEach(log -> {
                                 try {
-                                    // Überprüfen, ob der empfangene String JSON ist
-                                    if (finalLine.trim().startsWith("{") && finalLine.trim().endsWith("}")) {
-                                        // JSON verarbeiten
-                                        ObjectMapper objectMapper = new ObjectMapper();
-                                        JsonNode jsonNode = objectMapper.readTree(finalLine);
-                                        String timestamp = jsonNode.has("timestamp") ? jsonNode.get("timestamp").asText() : "N/A";
-                                        String message = jsonNode.has("message") ? jsonNode.get("message").asText() : "Keine Nachricht";
-
-                                        // Log-Eintrag im UI anzeigen
-                                        Div logEntry = new Div();
-                                        logEntry.setText("[" + timestamp + "] " + message);
-                                        conCanvas.add(logEntry);
-
-                                        // Automatisch scrollen
-                                        ui.getPage().executeJs("const el = document.querySelector('.conCanvas'); if (el) { el.scrollTop = el.scrollHeight; }");
-
-                                    } else {
-                                        // Nicht-JSON-Daten direkt anzeigen
-                                        Div logEntry = new Div();
-                                        logEntry.setText("RAW: " + finalLine);
-                                        conCanvas.add(logEntry);
-                                    }
-
+                                    ObjectMapper objectMapper = new ObjectMapper();
+                                    JsonNode jsonNode = objectMapper.readTree(log);
+                                    String timestamp = jsonNode.has("timestamp") ? jsonNode.get("timestamp").asText() : "N/A";
+                                    String message = jsonNode.has("message") ? jsonNode.get("message").asText() : "Keine Nachricht";
+                                    Div logEntry = new Div();
+                                    logEntry.setText("[" + timestamp + "] " + message);
+                                    conCanvas.add(logEntry);
                                 } catch (Exception e) {
                                     Div errorEntry = new Div();
-                                    errorEntry.setText("Fehler beim Verarbeiten von JSON: " + e.getMessage());
+                                    errorEntry.setText("RAW: " + log);
                                     conCanvas.add(errorEntry);
-                                    e.printStackTrace();
                                 }
                             });
-                        }
+                            ui.getPage().executeJs("const el = document.querySelector('.conCanvas'); if (el) { el.scrollTop = el.scrollHeight; }");
+                        });
                     }
-                } catch (Exception e) {
-                    ui.access(() -> {
-                        Div errorEntry = new Div();
-                        errorEntry.setText("Fehler beim Log-Stream: " + e.getMessage());
-                        conCanvas.add(errorEntry);
-                    });
-                    e.printStackTrace();
                 }
+            } catch (Exception e) {
+                ui.access(() -> {
+                    Div errorEntry = new Div();
+                    errorEntry.setText("Fehler beim Log-Stream: " + e.getMessage());
+                    conCanvas.add(errorEntry);
+                });
+                e.printStackTrace();
             }
         }).start();
     }
-
-
-
-
-
 
 }
