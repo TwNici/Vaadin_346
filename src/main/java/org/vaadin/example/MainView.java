@@ -35,6 +35,7 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
     private final MinecraftEndpoints minecraftEndpoints;
     private Div conCanvas;
     private TextField sendCommand;
+    private String ServerStatus;
 
     public MainView() {
         this.minecraftEndpoints = new MinecraftEndpoints("http://10.0.1.4:5000");
@@ -54,8 +55,14 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
         Button sendCommandButton = new Button(new Icon(VaadinIcon.PLAY), e -> sendCommands());
 
         conCanvas = new Div();
-        conCanvas.addClassName("conCanvas");
+        conCanvas.addClassName("conNotiA");
 
+        Console con = new Console();
+        ServerStatus = con.getNoti();
+        Div status = new Div(ServerStatus);
+        add(ServerStatus);
+
+        status.addClassName("status");
         start.addClassName("start");
         stop.addClassName("stop");
         restart.addClassName("restart");
