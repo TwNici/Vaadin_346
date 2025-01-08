@@ -3,19 +3,21 @@ package org.vaadin.example;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MinecraftEndpoints {
 
     private final String baseUrl;
+    private final Timer timer = new Timer(true);  // Ein globaler Timer für den gesamten Stream
+    private final List<String> logEntries = new ArrayList<>();
 
     public MinecraftEndpoints(String baseUrl) {
         this.baseUrl = baseUrl;
@@ -34,6 +36,11 @@ public class MinecraftEndpoints {
         } else {
             throw new IOException("API-Fehler: " + response.statusCode() + " - " + response.body());
         }
+    }
+
+    public void clearLog() {
+        logEntries.clear();
+        System.out.println("Log-Einträge wurden gelöscht.");
     }
 
     public String sendCommand(String command) throws IOException, InterruptedException {
@@ -55,32 +62,33 @@ public class MinecraftEndpoints {
     }
 
     public void startLogStream(UI ui, Div conCanvas) {
-        new Thread(() -> {
-            try {
-                URL url = new URL(baseUrl + "/minecraft-console");
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    HttpClient client = HttpClient.newHttpClient();
+                    HttpRequest request = HttpRequest.newBuilder()
+                            .uri(URI.create(baseUrl + "/minecraft-console"))
+                            .GET()
+                            .build();
 
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        String finalLine = line;
-                        ui.access(() -> {
-                            Div logEntry = new Div();
-                            logEntry.setText(finalLine);
-                            conCanvas.add(logEntry);
-                            conCanvas.getElement().executeJs("this.scrollTop = this.scrollHeight;");
-                        });
-                    }
+                    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                    ui.access(() -> {
+                        conCanvas.removeAll();
+                        conCanvas.setText(response.body());
+                        conCanvas.getElement().executeJs("this.scrollTop = this.scrollHeight;");
+                    });
+
+                } catch (Exception e) {
+                    ui.access(() -> conCanvas.setText("Fehler beim Abrufen der Logs: " + e.getMessage()));
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                ui.access(() -> {
-                    Div errorEntry = new Div();
-                    errorEntry.setText("Fehler beim Log-Stream: " + e.getMessage());
-                    conCanvas.add(errorEntry);
-                });
-                e.printStackTrace();
             }
-        }).start();
+        }, 0, 3000); // Aktualisierung alle 3 Sekunden
+    }
+
+    public void stopLogStream() {
+        timer.cancel();
     }
 }

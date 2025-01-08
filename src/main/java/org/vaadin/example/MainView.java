@@ -69,6 +69,8 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
 
     private void serverStarter() {
         try {
+            minecraftEndpoints.clearLog();
+            minecraftEndpoints.startLogStream(UI.getCurrent(), conCanvas);
             Notification.show(minecraftEndpoints.doAction("start-minecraft"));
         } catch (Exception e) {
             handleError(e);
@@ -77,6 +79,7 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
 
     private void serverStopper() {
         try {
+            minecraftEndpoints.stopLogStream();
             Notification.show(minecraftEndpoints.doAction("stop-minecraft"));
         } catch (Exception e) {
             handleError(e);
@@ -85,11 +88,16 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
 
     private void serverRestarter() {
         try {
+            minecraftEndpoints.stopLogStream();  // Stoppe den aktuellen Stream
+            minecraftEndpoints.clearLog();       // Lösche die Logs
+            minecraftEndpoints.startLogStream(UI.getCurrent(), conCanvas); // Starte den neuen Stream
             Notification.show(minecraftEndpoints.doAction("restart-minecraft"));
         } catch (Exception e) {
             handleError(e);
         }
     }
+
+
 
     private void sendCommands() {
         String command = sendCommand.getValue();
