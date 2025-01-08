@@ -35,10 +35,13 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
     private final MinecraftEndpoints minecraftEndpoints;
     private Div conCanvas;
     private TextField sendCommand;
-    private String ServerStatus;
+    private String serverStatus;
+    private Div statusDiv;
 
     public MainView() {
         this.minecraftEndpoints = new MinecraftEndpoints("http://10.0.1.4:5000");
+        Console con = new Console();
+
 
         H1 title = new H1("Server Dashboard");
         title.addClassName("title");
@@ -48,31 +51,28 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver {
         Button restart = new Button(new Icon(VaadinIcon.REFRESH), e -> serverRestarter());
         Button logout = new Button(new Icon(VaadinIcon.EXIT), e -> logout());
 
-
-
-
         sendCommand = new TextField();
         Button sendCommandButton = new Button(new Icon(VaadinIcon.PLAY), e -> sendCommands());
 
         conCanvas = new Div();
-        conCanvas.addClassName("conNotiA");
+        conCanvas.addClassName("conCanvas");
 
-        Console con = new Console();
-        ServerStatus = con.getNoti();
-        Div status = new Div(ServerStatus);
-        add(ServerStatus);
+        serverStatus = con.getNoti();
+        statusDiv = new Div(serverStatus);
+        statusDiv.addClassName("conNotiA");
 
-        status.addClassName("status");
         start.addClassName("start");
         stop.addClassName("stop");
         restart.addClassName("restart");
         logout.addClassName("logout");
         sendCommand.addClassName("sendCommand");
         sendCommandButton.addClassName("sendCommandButton");
-        add(title, start, stop, restart, logout, conCanvas, sendCommand, sendCommandButton);
+
+        add(title, start, stop, restart, logout, conCanvas, sendCommand, sendCommandButton, statusDiv);
 
         minecraftEndpoints.startLogStream(UI.getCurrent(), conCanvas);
     }
+
 
     private void serverStarter() {
         try {
