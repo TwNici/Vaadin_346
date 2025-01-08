@@ -1,23 +1,25 @@
 package org.vaadin.example;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class MinecraftEndpoints {
 
     private final String baseUrl;
-    private final Timer timer = new Timer(true);  // Ein globaler Timer für den gesamten Stream
-    private final List<String> logEntries = new ArrayList<>();
+    private volatile boolean isStreaming = false;
+
 
     public MinecraftEndpoints(String baseUrl) {
         this.baseUrl = baseUrl;
@@ -38,11 +40,6 @@ public class MinecraftEndpoints {
         }
     }
 
-    public void clearLog() {
-        logEntries.clear();
-        System.out.println("Log-Einträge wurden gelöscht.");
-    }
-
     public String sendCommand(String command) throws IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
         String jsonPayload = String.format("{\"command\": \"%s\"}", command);
@@ -61,34 +58,70 @@ public class MinecraftEndpoints {
         }
     }
 
+
     public void startLogStream(UI ui, Div conCanvas) {
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
+        isStreaming = true;
+        new Thread(() -> {
+            while (isStreaming) {
                 try {
-                    HttpClient client = HttpClient.newHttpClient();
-                    HttpRequest request = HttpRequest.newBuilder()
-                            .uri(URI.create(baseUrl + "/minecraft-console"))
-                            .GET()
-                            .build();
+                    URL url = new URL(baseUrl + "/minecraft-console");
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("GET");
 
-                    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            String finalLine = line;
 
-                    ui.access(() -> {
-                        conCanvas.removeAll();
-                        conCanvas.setText(response.body());
-                        conCanvas.getElement().executeJs("this.scrollTop = this.scrollHeight;");
-                    });
+                            ui.access(() -> {
+                                try {
+                                    // Überprüfen, ob der empfangene String JSON ist
+                                    if (finalLine.trim().startsWith("{") && finalLine.trim().endsWith("}")) {
+                                        // JSON verarbeiten
+                                        ObjectMapper objectMapper = new ObjectMapper();
+                                        JsonNode jsonNode = objectMapper.readTree(finalLine);
+                                        String timestamp = jsonNode.has("timestamp") ? jsonNode.get("timestamp").asText() : "N/A";
+                                        String message = jsonNode.has("message") ? jsonNode.get("message").asText() : "Keine Nachricht";
 
+                                        // Log-Eintrag im UI anzeigen
+                                        Div logEntry = new Div();
+                                        logEntry.setText("[" + timestamp + "] " + message);
+                                        conCanvas.add(logEntry);
+
+                                        // Automatisch scrollen
+                                        ui.getPage().executeJs("const el = document.querySelector('.conCanvas'); if (el) { el.scrollTop = el.scrollHeight; }");
+
+                                    } else {
+                                        // Nicht-JSON-Daten direkt anzeigen
+                                        Div logEntry = new Div();
+                                        logEntry.setText("RAW: " + finalLine);
+                                        conCanvas.add(logEntry);
+                                    }
+
+                                } catch (Exception e) {
+                                    Div errorEntry = new Div();
+                                    errorEntry.setText("Fehler beim Verarbeiten von JSON: " + e.getMessage());
+                                    conCanvas.add(errorEntry);
+                                    e.printStackTrace();
+                                }
+                            });
+                        }
+                    }
                 } catch (Exception e) {
-                    ui.access(() -> conCanvas.setText("Fehler beim Abrufen der Logs: " + e.getMessage()));
+                    ui.access(() -> {
+                        Div errorEntry = new Div();
+                        errorEntry.setText("Fehler beim Log-Stream: " + e.getMessage());
+                        conCanvas.add(errorEntry);
+                    });
                     e.printStackTrace();
                 }
             }
-        }, 0, 3000); // Aktualisierung alle 3 Sekunden
+        }).start();
     }
 
-    public void stopLogStream() {
-        timer.cancel();
-    }
+
+
+
+
+
 }
