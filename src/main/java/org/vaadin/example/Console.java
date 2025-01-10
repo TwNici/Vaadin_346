@@ -19,7 +19,7 @@ public class Console {
     public String fetchServerStatus() {
         String noti;
         try {
-            URL url = new URL("http://10.0.1.4:5000");
+            URL url = new URL("http://10.0.1.4:5000/status-minecraft");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             con.setConnectTimeout(3000);
@@ -54,10 +54,10 @@ public class Console {
                         noti = "Status: 🟠";
                 }
             } else {
-                noti = "🔴 Server nicht erreichbar";
+                noti = "❌";
             }
         } catch (IOException | JSONException e) {
-            noti = "🔴 Verbindung fehlgeschlagen: " + e.getMessage();
+            noti = "Status: ❌";
         }
         return noti;
     }
